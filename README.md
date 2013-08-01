@@ -1,0 +1,2 @@
+# studysails
+### a Sails application
