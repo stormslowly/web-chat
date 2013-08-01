@@ -9,7 +9,7 @@ module.exports = {
 
   chat: function (req, res) {
     
-    res.send('hello world!');
+    res.view();
   }
   
 
