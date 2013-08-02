@@ -18,10 +18,25 @@ Rose: Jack you jump i jump!!
 
 <div class="well navbar navbar-fixed-bottom">
   <div class="container  row-fluid">
-    <form class="navbar-form pull-left span12">
-      <input type="text" class="span4 offset2" placeholder="Enter your message" >
-      <button  class="btn-success btn offset1"><i class="icon-envelope icon-white"></i> Submit</button>
-    </form>
+    <div class="navbar-form pull-left span12">
+      <input  id="message" type="text" class="span4 offset2" placeholder="Enter your message" >
+      <button id="postMessageButton" class="btn-success btn offset1" action=false><i class="icon-envelope icon-white"></i> Submit</button>
+    </div>
   </div>
 </div>
+<script type="text/javascript">
 
+    $("#postMessageButton").click(function(){
+        var messageText = $("#message").val();
+        if ($.trim(messageText)!==""){
+
+          socket.post("/message",{"content": messageText},function(res){
+            console.log("pshu",res);
+          });
+          
+        }
+        $("#message").focus();
+        $("#message").val("");
+    });
+
+</script>>
