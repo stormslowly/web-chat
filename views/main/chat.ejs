@@ -2,18 +2,17 @@
 
 <div id="chats" class="well row-fluid">
 
-<div class="span2"></div>
-<div class="span4">
-<div class="brand">
-welcome to wet chat
-</div>
+    <div class="span2"></div>
+    <div class="span4">
+        <div class="brand">
+        welcome to wet chat
+        </div>
 
+        <div id="messagesContainer">
 
-<div class="chat">
-Rose: Jack you jump i jump!!
-</div>
+        </div>
 
-</div>
+    </div>
 </div>
 
 <div class="well navbar navbar-fixed-bottom">
@@ -26,17 +25,89 @@ Rose: Jack you jump i jump!!
 </div>
 <script type="text/javascript">
 
+    var MessageModel = Backbone.Model.extend({
+        urlRoot: '/message'
+    });
+
+    var SailsCollection = Backbone.Collection.extend({
+        sailsCollection: "",
+        socket: null,
+        sync: function(method, model, options){
+            var where = {};
+            if (options.where) {
+                where = {
+                    where: options.where
+                }
+            }
+            if(typeof this.sailsCollection === "string" && this.sailsCollection !== "") {
+                this.socket = io.connect();
+                this.socket.on("connect", _.bind(function(){
+                    this.socket.request("/" + this.sailsCollection, where, _.bind(function(users){
+                        this.set(users);
+                    }, this));
+
+                    this.socket.on("message", _.bind(function(msg){
+                        var m = msg.uri.split("/").pop();
+                        if (m === "create") {
+                            this.add(msg.data);
+                        } else if (m === "update") {
+                            this.get(msg.data.id).set(msg.data);
+                        } else if (m === "destroy") {
+                            this.remove(this.get(msg.data.id));
+                        }
+                    }, this));
+                }, this));
+            } else {
+                console.log("Error: Cannot retrieve models because property 'sailsCollection' not set on the collection");
+            }
+        }
+    });
+
+    var MessageCollection = SailsCollection.extend({
+        sailsCollection: 'message',
+        model: MessageModel
+    });
+
+    var messages = new MessageCollection();
+    messages.fetch();
+
+    _.templateSettings = {
+        interpolate : /\{\{(.+?)\}\}/g
+    };
+
+    var MessagesView = Backbone.View.extend({
+        el: '#messagesContainer',
+        initialize: function () {
+            this.collection.on('add', this.render, this);
+            this.render();
+        },
+        template: _.template("<div><p>{{ message }}</p></div>"),
+        render: function () {
+            this.$el.html("");
+
+            this.collection.each(function(msg){
+                var chat = msg.attributes.content;
+                this.$el.append("<div id=\"" +chat.id +"\" ><p>" +msg.attributes.content + "</p></div>" );
+            },this)
+
+        }
+    });
+
+    var mView = new MessagesView({collection: messages});
+
     $("#postMessageButton").click(function(){
         var messageText = $("#message").val();
         if ($.trim(messageText)!==""){
 
-          socket.post("/message",{"content": messageText},function(res){
+          socket.request("/message",{"content": messageText},function(res){
             console.log("pshu",res);
-          });
+          },'post');
           
         }
         $("#message").focus();
         $("#message").val("");
+        $('html, body').animate({scrollTop: $(document).height()}, 'slow');
+
     });
 
-</script>>
+</script>
